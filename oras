@@ -1,1 +1,156 @@
-test
+#!/usr/bin/env bash
+
+# Copyright The Hedgehog Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# The install script is based off of the Helm v3 install script:
+# https://github.com/helm/helm/blob/main/scripts/get-helm-3
+
+: ${BINARY_NAME:="oras"}
+: ${USE_SUDO:="true"}
+: ${DEBUG:="false"}
+: ${INSTALL_DIR:="/usr/local/bin"}
+
+HAS_CURL="$(type "curl" &> /dev/null && echo true || echo false)"
+HAS_WGET="$(type "wget" &> /dev/null && echo true || echo false)"
+
+# initArch discovers the architecture for this system.
+initArch() {
+  ARCH=$(uname -m)
+  case $ARCH in
+    armv5*) ARCH="armv5";;
+    armv6*) ARCH="armv6";;
+    armv7*) ARCH="arm";;
+    aarch64) ARCH="arm64";;
+    x86) ARCH="386";;
+    x86_64) ARCH="amd64";;
+    i686) ARCH="386";;
+    i386) ARCH="386";;
+  esac
+}
+
+# initOS discovers the operating system for this system.
+initOS() {
+  OS=$(echo `uname`|tr '[:upper:]' '[:lower:]')
+
+  case "$OS" in
+    # Minimalist GNU for Windows
+    mingw*|cygwin*) OS='windows';;
+  esac
+}
+
+# runs the given command as root (detects if we are root already)
+runAsRoot() {
+  if [ $EUID -ne 0 -a "$USE_SUDO" = "true" ]; then
+    sudo "${@}"
+  else
+    "${@}"
+  fi
+}
+
+# verifySupported checks that the os/arch combination is supported for
+# binary builds, as well whether or not necessary tools are present.
+verifySupported() {
+  local supported="darwin-amd64\ndarwin-arm64\nlinux-amd64\nlinux-arm64"
+  if ! echo "${supported}" | grep -q "${OS}-${ARCH}"; then
+    echo "No prebuilt binary for ${OS}-${ARCH}."
+    echo "To build from source, go to https://github.com/oras-project/oras"
+    exit 1
+  fi
+
+  if [ "${HAS_CURL}" != "true" ] && [ "${HAS_WGET}" != "true" ]; then
+    echo "Either curl or wget is required"
+    exit 1
+  fi
+}
+
+findLatestVersion() {
+    local latest_release_url="https://api.github.com/repos/oras-project/oras/releases/latest"
+    local latest_release_response=""
+    if [ "${HAS_CURL}" == "true" ]; then
+      latest_release_response=$( curl -L --silent --show-error --fail "$latest_release_url" 2>&1 || true )
+    elif [ "${HAS_WGET}" == "true" ]; then
+      latest_release_response=$( wget "$latest_release_url" -O - 2>&1 || true )
+    fi
+    TAG=$( echo "$latest_release_response" | grep '"tag_name"' | sed -E 's/.*"(v[0-9\.]+)".*/\1/g' | cut -c 2- )
+    if [ "x$TAG" == "x" ]; then
+      printf "Could not retrieve the latest release tag information from %s: %s\n" "${latest_release_url}" "${latest_release_response}"
+      exit 1
+    fi
+}
+
+downloadFile() {
+  DIST="oras_${TAG}_${OS}_${ARCH}.tar.gz"
+  DOWNLOAD_URL="https://github.com/oras-project/oras/releases/download/v$TAG/$DIST"
+  TMP_ROOT="$(mktemp -dt oras-XXXXXX)"
+  TMP_FILE="$TMP_ROOT/$DIST"
+  echo "Downloading $DOWNLOAD_URL"
+  if [ "${HAS_CURL}" == "true" ]; then
+    curl -SsL "$DOWNLOAD_URL" -o "$TMP_FILE"
+  elif [ "${HAS_WGET}" == "true" ]; then
+    wget -q -O "$TMP_FILE" "$DOWNLOAD_URL"
+  fi
+}
+
+installFile() {
+  TMP="$TMP_ROOT/$BINARY_NAME"
+  mkdir -p "$TMP"
+  tar xf "$TMP_FILE" -C "$TMP"
+  TMP_BIN="$TMP/oras"
+  echo "Preparing to install $BINARY_NAME into ${INSTALL_DIR}"
+  runAsRoot cp "$TMP_BIN" "$INSTALL_DIR/$BINARY_NAME"
+  echo "$BINARY_NAME installed into $INSTALL_DIR/$BINARY_NAME"
+}
+
+# fail_trap is executed if an error occurs.
+fail_trap() {
+  result=$?
+  if [ "$result" != "0" ]; then
+    if [[ -n "$INPUT_ARGUMENTS" ]]; then
+      echo "Failed to install $BINARY_NAME with the arguments provided: $INPUT_ARGUMENTS"
+      help
+    else
+      echo "Failed to install $BINARY_NAME"
+    fi
+  fi
+  cleanup
+  exit $result
+}
+
+# cleanup temporary files to avoid https://github.com/helm/helm/issues/2977
+cleanup() {
+  if [[ -d "${TMP_ROOT:-}" ]]; then
+    rm -rf "$TMP_ROOT"
+  fi
+}
+
+# Execution
+
+#Stop execution on any error
+trap "fail_trap" EXIT
+set -e
+set -o pipefail
+
+# Set debug if desired
+if [ "${DEBUG}" == "true" ]; then
+  set -x
+fi
+
+initArch
+initOS
+verifySupported
+findLatestVersion
+downloadFile
+installFile
+cleanup
