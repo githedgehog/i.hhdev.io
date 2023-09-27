@@ -97,7 +97,6 @@ installFile() {
 # Execution
 
 #Stop execution on any error
-trap "fail_trap" EXIT
 set -e
 set -o pipefail
 
