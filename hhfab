@@ -51,10 +51,11 @@ initOS() {
 
 # runs the given command as root (detects if we are root already)
 runAsRoot() {
+  HOME=${HOME:-/tmp}
   if [ $EUID -ne 0 -a "$USE_SUDO" = "true" ]; then
-    sudo "${@}"
+    sudo HOME=$HOME "${@}"
   else
-    "${@}"
+    HOME=$HOME "${@}"
   fi
 }
 
