@@ -21,6 +21,7 @@
 : ${USE_SUDO:="true"}
 : ${DEBUG:="false"}
 : ${INSTALL_DIR:="/usr/local/bin"}
+: ${TAG:="latest"}
 
 HAS_ORAS="$(type "oras" &> /dev/null && echo true || echo false)"
 
@@ -75,21 +76,8 @@ verifySupported() {
   fi
 }
 
-downloadFile() {
-  DIST="oras_${TAG}_${OS}_${ARCH}.tar.gz"
-  DOWNLOAD_URL="https://github.com/oras-project/oras/releases/download/v$TAG/$DIST"
-  TMP_ROOT="$(mktemp -dt oras-XXXXXX)"
-  TMP_FILE="$TMP_ROOT/$DIST"
-  echo "Downloading $DOWNLOAD_URL"
-  if [ "${HAS_CURL}" == "true" ]; then
-    curl -SsL "$DOWNLOAD_URL" -o "$TMP_FILE"
-  elif [ "${HAS_WGET}" == "true" ]; then
-    wget -q -O "$TMP_FILE" "$DOWNLOAD_URL"
-  fi
-}
-
 installFile() {
-  runAsRoot oras pull -o /usr/local/bin/ ghcr.io/githedgehog/fabricator/hhfab:latest
+  runAsRoot oras pull -o /usr/local/bin/ ghcr.io/githedgehog/fabricator/hhfab:"${TAG}"
   runAsRoot chmod +x /usr/local/bin/hhfab
 
   echo "$BINARY_NAME installed into $INSTALL_DIR/$BINARY_NAME"
