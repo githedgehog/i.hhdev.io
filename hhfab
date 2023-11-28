@@ -22,6 +22,8 @@
 : ${DEBUG:="false"}
 : ${INSTALL_DIR:="/usr/local/bin"}
 : ${TAG:="latest"}
+: ${VERSION:="$TAG"}
+
 
 HAS_ORAS="$(type "oras" &> /dev/null && echo true || echo false)"
 
@@ -77,8 +79,14 @@ verifySupported() {
 }
 
 installFile() {
-  runAsRoot oras pull -o /usr/local/bin/ ghcr.io/githedgehog/fabricator/hhfab:"${TAG}"
-  runAsRoot chmod +x /usr/local/bin/hhfab
+  case "$VERSION" in
+    latest) VERSION="v0.5.2";;
+    alpha-1) VERSION="v0.5.2";;
+    dev) VERSION="latest";;
+  esac
+
+  runAsRoot oras pull -o $INSTALL_DIR/ ghcr.io/githedgehog/fabricator/hhfab:"${VERSION}"
+  runAsRoot chmod +x $INSTALL_DIR/$BINARY_NAME
 
   echo "$BINARY_NAME installed into $INSTALL_DIR/$BINARY_NAME"
 }
