@@ -22,8 +22,11 @@
 : ${DEBUG:="false"}
 : ${INSTALL_DIR:="/usr/local/bin"}
 : ${TAG:="latest"}
+: ${TEST_DIR:="$HOME/.testfab"}
+: ${TEMP_DIR:="/tmp/testfab"}
 
 HAS_ORAS="$(type "oras" &> /dev/null && echo true || echo false)"
+HAS_FABRIC="$(type "hhfab" &> /dev/null && echo true || echo false)"
 
 # initArch discovers the architecture for this system.
 initArch() {
@@ -74,12 +77,17 @@ verifySupported() {
     echo "Oras required, you can install it by running: curl -fsSL https://i.hhdev.io/oras | bash"
     exit 1
   fi
+  if [ "${HAS_FABRIC}" != "true" ] ; then
+    echo "Fabric required, you can install it by running: curl -fsSL https://i.hhdev.io/hhfab | bash"
+    exit 1
+  fi
 }
 
 installFile() {
-  runAsRoot oras pull -o /usr/local/bin/ ghcr.io/githedgehog/testfab:"${TAG}"
-  runAsRoot chmod +x /usr/local/bin/testfab
-
+  runAsRoot oras pull -o ${INSTALL_DIR}/ ghcr.io/githedgehog/testfab/testfab:"${TAG}"
+  runAsRoot chmod +x ${INSTALL_DIR}/testfab
+  runAsRoot chmod +x ${INSTALL_DIR}/test_fabric
+  runAsRoot chmod +x ${INSTALL_DIR}/test_fabricator
   echo "$BINARY_NAME installed into $INSTALL_DIR/$BINARY_NAME"
 }
 
