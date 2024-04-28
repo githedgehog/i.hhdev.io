@@ -65,7 +65,7 @@ runAsRoot() {
 # verifySupported checks that the os/arch combination is supported for
 # binary builds, as well whether or not necessary tools are present.
 verifySupported() {
-  local supported="linux-amd64"
+  local supported="darwin-amd64\ndarwin-arm64\nlinux-amd64\nlinux-arm64"
   if ! echo "${supported}" | grep -q "${OS}-${ARCH}"; then
     echo "No prebuilt binary for ${OS}-${ARCH}."
     echo "To build from source, go to https://github.com/githedgehog/fabricator"
@@ -89,8 +89,14 @@ installFile() {
     dev) VERSION="latest";;
   esac
 
-  runAsRoot oras pull -o $INSTALL_DIR/ ghcr.io/githedgehog/fabricator/hhfab:"${VERSION}"
-  runAsRoot chmod +x $INSTALL_DIR/$BINARY_NAME
+  local name="hhfab-${OS}-${ARCH}"
+
+  if [[ "$name" == "hhfab-linux-amd64" ]]; then
+    name="hhfab"
+  fi
+
+  runAsRoot oras pull -o "$INSTALL_DIR/" "ghcr.io/githedgehog/fabricator/${name}:${VERSION}"
+  runAsRoot chmod +x "$INSTALL_DIR/$BINARY_NAME"
 
   echo "$BINARY_NAME installed into $INSTALL_DIR/$BINARY_NAME"
 }
