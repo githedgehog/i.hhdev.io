@@ -80,14 +80,14 @@ verifySupported() {
 
 installFile() {
   case "$VERSION" in
-    latest) VERSION="v0.19.1";;
+    latest) VERSION="v0.19.2";;
     alpha-1) VERSION="v0.5.2";;
     alpha-2) VERSION="v0.8.0";;
     alpha-3) VERSION="v0.10.2";;
     alpha-4) VERSION="v0.12.1";;
     alpha-5) VERSION="v0.14.0";;
     alpha-6) VERSION="v0.16.3";;
-    alpha-7) VERSION="v0.19.1";;
+    alpha-7) VERSION="v0.19.2";;
     dev) VERSION="latest";;
   esac
 
