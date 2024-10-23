@@ -24,7 +24,8 @@
 : ${TAG:="latest"}
 : ${VERSION:="$TAG"}
 
-
+HAS_CURL="$(type "curl" &> /dev/null && echo true || echo false)"
+HAS_WGET="$(type "wget" &> /dev/null && echo true || echo false)"
 HAS_ORAS="$(type "oras" &> /dev/null && echo true || echo false)"
 
 # initArch discovers the architecture for this system.
@@ -78,24 +79,40 @@ verifySupported() {
   fi
 }
 
+findLatestVersion() {
+    local latest_release_url="https://api.github.com/repos/githedgehog/fabricator/releases/latest"
+    local latest_release_response=""
+    if [ "${HAS_CURL}" == "true" ]; then
+      latest_release_response=$( curl -L --silent --show-error --fail "$latest_release_url" 2>&1 || true )
+    elif [ "${HAS_WGET}" == "true" ]; then
+      latest_release_response=$( wget "$latest_release_url" -O - 2>&1 || true )
+    fi
+    VERSION=$( echo "$latest_release_response" | grep '"tag_name"' | sed -E 's/.*"(v[0-9\.]+)".*/\1/g' | cut -c 1- )
+    if [ "x$VERSION" == "x" ]; then
+      printf "Could not retrieve the latest release tag information from %s: %s\n" "${latest_release_url}" "${latest_release_response}"
+      exit 2
+    fi
+}
+
 installFile() {
   case "$VERSION" in
     latest) VERSION="v0.19.2";;
-    alpha-1) VERSION="v0.5.2";;
-    alpha-2) VERSION="v0.8.0";;
-    alpha-3) VERSION="v0.10.2";;
-    alpha-4) VERSION="v0.12.1";;
-    alpha-5) VERSION="v0.14.0";;
-    alpha-6) VERSION="v0.16.3";;
     alpha-7) VERSION="v0.19.2";;
-    dev) VERSION="latest";;
+    beta-1) VERSION="v0.30.0";;
   esac
 
   local name="hhfab-${OS}-${ARCH}"
 
-  if [[ "$name" == "hhfab-linux-amd64" ]]; then
+  if [[ "$VERSION" == "v0.19.2" ]]; then
     name="hhfab"
   fi
+
+  if [[ "$VERSION" == "dev" ]]; then
+    echo "Discovering latest dev version..."
+    findLatestVersion
+  fi
+
+  echo "Downloading $name version $VERSION"
 
   runAsRoot oras pull -o "$INSTALL_DIR/" "ghcr.io/githedgehog/fabricator/${name}:${VERSION}"
   runAsRoot chmod +x "$INSTALL_DIR/$BINARY_NAME"
@@ -105,7 +122,7 @@ installFile() {
 
 # Execution
 
-#Stop execution on any error
+# Stop execution on any error
 set -e
 set -o pipefail
 
