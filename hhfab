@@ -96,8 +96,8 @@ findLatestVersion() {
 
 installFile() {
   case "$VERSION" in
-    latest) VERSION="v0.30.0";;
-    beta-1) VERSION="v0.30.0";;
+    latest) VERSION="v0.30.1";;
+    beta-1) VERSION="v0.30.1";;
     alpha-7) VERSION="v0.19.2";;
   esac
 
