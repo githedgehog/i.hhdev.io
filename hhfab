@@ -97,6 +97,8 @@ findLatestVersion() {
 installFile() {
   case "$VERSION" in
     latest) VERSION="v0.38.1";;
+    25.03) VERSION="v0.40.0";;
+    25.03.0) VERSION="v0.40.0";;
     25.02) VERSION="v0.38.1";;
     25.02.0) VERSION="v0.38.1";;
     25.01) VERSION="v0.36.1";;
