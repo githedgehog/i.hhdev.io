@@ -80,6 +80,8 @@ verifySupported() {
 }
 
 findLatestVersion() {
+    echo "Discovering latest dev release...";
+
     local latest_release_url="https://api.github.com/repos/githedgehog/fabricator/releases/latest"
     local latest_release_response=""
     if [ "${HAS_CURL}" == "true" ]; then
@@ -95,10 +97,10 @@ findLatestVersion() {
 }
 
 findMasterVersion() {
+    echo "Discovering available master builds..."
+
     local name="hhfab-${OS}-${ARCH}"
     local repo="ghcr.io/githedgehog/fabricator/${name}"
-
-    echo "Discovering available master builds..."
 
     # List all tags and filter for master builds
     local master_tags=$( oras repo tags "$repo" 2>/dev/null | grep "^v0-master-" | tail -1 )
@@ -109,7 +111,6 @@ findMasterVersion() {
     fi
 
     VERSION="$master_tags"
-    echo "Found latest master build: $VERSION"
 }
 
 installFile() {
@@ -126,8 +127,8 @@ installFile() {
     24.09) VERSION="v0.32.1";;
     24.09.0) VERSION="v0.32.1";;
     beta-1) VERSION="v0.30.3";;
-    dev) echo "Discovering latest dev version..."; findLatestVersion;;
-    master) echo "Discovering latest master commit..."; findMasterVersion;;
+    dev) findLatestVersion;;
+    master) findMasterVersion;;
   esac
 
   local name="hhfab-${OS}-${ARCH}"
