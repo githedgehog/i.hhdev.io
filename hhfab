@@ -116,8 +116,8 @@ findMasterVersion() {
 installFile() {
   case "$VERSION" in
     latest) VERSION="v0.43.1";;
-    26.01) VERSION="v0.45.0";;
-    26.01.0) VERSION="v0.45.0";;
+    26.01) VERSION="v0.45.2";;
+    26.01.0) VERSION="v0.45.2";;
     25.05) VERSION="v0.43.1";;
     25.05.0) VERSION="v0.43.1";;
     25.04) VERSION="v0.41.3";;
