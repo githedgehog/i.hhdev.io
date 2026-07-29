@@ -118,6 +118,7 @@ installFile() {
     latest) VERSION="v0.47.4";;
     26.02) VERSION="v0.47.4";;
     26.02.0) VERSION="v0.47.4";;
+    26.02.1) VERSION="v0.47.5";;
     26.01) VERSION="v0.45.5";;
     26.01.0) VERSION="v0.45.5";;
     25.05) VERSION="v0.43.2";;
